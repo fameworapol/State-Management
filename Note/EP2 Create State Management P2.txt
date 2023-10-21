@@ -1,0 +1,29 @@
+🔴 Selector การดึงค่าจาก state ไปให้ compoment ที่เราต้องการนำไปใช้งาน
+    🟠 Method ในการสร้าง Selector
+        🔵 Method สำหรับสร้าง Selector
+        private createSelector<T>(
+            selector:(state:AppState)=>T // รับ functon state > มี parameter เป็น state ทีมี type เป็น AppState
+        ):Observable<T>{ //กำหนดให้ Selector return เป็น Observable
+            return this.state.pipe(
+            map(selector), //map ค่าที่ต้องการ
+            distinctUntilChanged(), //ถ้า state ไม่เปลี่ยนไม่ต้องทำงานซ้ำ
+            shareReplay(1) //ให้ component ที่ทำการ subscribe ได้ค่า state ล่าสุดออกไป
+            )
+        }
+    🟠 สร้าง selector
+        🔵 ดึงค่าจาก state มาใช้
+        limit$ = this.createSelector(state=>state.limit) // ดึงค่า limit จาก state
+        offset$ = this.createSelector(state=>state.offset) // // ดึงค่า offset จาก state
+    🟠 แสดงค่าจาก state ที่ดึงมาโดยใช้ selector
+        app.compoment.html
+            <div>Limit
+                <button (click)="increaseLimit(10)">+</button>
+                {{store.limit$ | async}} <!--เนื่องจากเป็นตัวแปร observable ต้อง subScribe ก่อน-->
+                <button (click)="decreaseLimit(10)">-</button>
+            </div>
+            <br>
+            <div>Offset
+                <button (click)="increaseOffset(10)">+</button>
+                {{store.offset$ | async}} <!--เนื่องจากเป็นตัวแปร observable ต้อง subScribe ก่อน-->
+                <button (click)="decreaseLimit(10)">-</button>
+            </div>

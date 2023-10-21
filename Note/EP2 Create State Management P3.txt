@@ -1,0 +1,40 @@
+🔴 Effect (ยิง API) >> เมื่อได้ response จาก API สามารถกำหนดได้ว่าต้องการให้ทำ Action อะไรต่อ
+    🟠 Method สำหรับสร้าง Effect
+        private createEffect<T>(effect$:Observable<T>) :Subscription{ //รับ effect ที่เป็น Observable เข้ามา
+            return effect$.subscribe();
+        }
+    🟠 challenge > โหลดข้อมูลจาก pokemon API
+        - loadPokemonAction เป็น Action สำหรับโหลดข้อมูล pokemon API
+        - เมื่อ API reponse กลับมาที่ Effect
+            ถ้า success > ให้เรียกใช้ Action loadPokemonSuccessAction > และเก็บข้อมูลที่ได้จาก response ลงใน store > selector ดึงข้อมูลใน store ไปแสดงผล
+            ถ้า error > ให้เรียกใช้ Action loadPokemonErrorAction
+    🔵 Action
+            private loadPokemonAction = new Subject<void>();
+            private loadPokemonSuccessAction = new Subject<any[]>();
+            private loadPokemonErrorAction = new Subject<any[]>();
+    🔵 Reducer
+        // เมื่อเกิด Action loadPokemonSuccessAction ให้เก็บค่า response ที่ได้ลงไปใน state pokemon
+        this.createReducer(this.loadPokemonSuccessAction,(state,pokemons)=>{
+            state.pokemons = pokemons
+            return state
+        })
+        // เมื่อเกิด Action loadPokemonErrorAction
+            this.createReducer(this.loadPokemonErrorAction.pipe(tap(err=>{
+            console.error(err) //ให้ log error ออกมา
+        })),(state, action)=>{
+            state.pokemons = [];
+            return state;
+        })
+    🔵 Effect
+        //เมื่อมีการเรียกใช้ loadPokemonAction ให้ยิง pokemonAPI
+        this.createEffect(this.loadPokemonAction.pipe(switchMap(()=>{
+            return this.http.get("https://pokeapi.co/api/v2/pokemon?offset=300&limit=100")
+            .pipe(catchError(err=>{
+            this.loadPokemonErrorAction.next(err) //ถ้า load ไม่สำเร็จให้เรียกใช้ loadPokemonErrorAction
+            return NEVER;
+            }))
+        }),tap(response=>{
+        this.loadPokemonSuccessAction.next(response.results) //ถ้า load สำเร็จให้ให้เรียกใช้ loadPokemonSuccessAction
+        })))
+    🔵 Selector
+        pokemons$ = this.createSelector(state=>state.pokemons) // ดึงค่า pokemons จาก state

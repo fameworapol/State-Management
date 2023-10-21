@@ -1,0 +1,102 @@
+🔴 Create State Management
+    Concept
+    - limit
+        เมื่อกดปุ่ม + หรือ - ใน limit >> จะส่ง Action ว่า + หรือ - >> Action จะส่งไปยัง Reducer ว่าจะ + หรือ - 8jk.o limit 
+        >> จากนั้น update ค่าใน limit และเก็บค่าไว้ใน store >> จาก Selector จะเอาค่า limit ที่เก็บไว้ใน store ล่าสุดมาแสดงใน component
+    - offet เหมือนกับ limit
+
+🔴 สร้าง store เป็น service
+    ng generate service store
+🔴 กำหนด Action ให้กับแต่ละการกระทำ
+    increaseLimitAction = new Subject<number>()
+    decreaseOffsetAction = new Subject<number>()
+    increaseOffsetAction = new Subject<number>()
+    decreaseLimitAction = new Subject<number>()
+    Limit
+        กดปุ่ม + >> inCreaseLimit
+        กดปุ่ม - >> deCreaseLimit
+    Offset
+        กดปุ่ม + >> inCreaseOffset
+        กดปุ่ม - >> deCreaseOffset
+🔴 Inject Store มาใช้ใน component
+    export class AppComponent {
+    title = 'state-management-project';
+    constructor(private store:StoreService){ }
+    ▶︎ เรียกใช้ Action
+    - app.component.html
+        <div>Limit
+            <button (click)="increaseLimit(10)">+</button>
+            <button (click)="decreaseLimit(10)">+</button>
+        </div>
+        <br>
+        <div>Offset
+            <button (click)="increaseOffset(10)">-</button>
+            <button (click)="decreaseLimit(10)">-</button>
+    - app.component.ts
+        public increaseLimit(value:number){
+            this.store.inCreateLimit(value)
+        }
+        public decreaseLimit(value:number){
+            this.store.inCreateLimit(value)
+        }
+        public increaseOffset(value:number){
+            this.store.inCreateLimit(value)
+        }
+        public decreaseOffset(value:number){
+            this.store.inCreateLimit(value)
+        }
+
+🔴 Reducer กำหนดว่าแต่ละ Action จะเปลี่ยนข้อมูลอะไรบ้างใน store (BehaviorSubject)
+    export interface AppState {
+        limit:number
+        offect:number
+    }
+    export class StoreService {
+    private state = new BehaviorSubject<AppState>( 🚩 กำหนดให้ Appstate เป็น state ของ Reducer นี้
+        {
+            🚩 ค่าเริ่มต้นของ state
+            limit:10,
+            offect:0
+            }
+        ); 
+    }
+
+    🟠 Method สำหรับสร้าง Reducer
+        //🔴 Method สำหรับสร้าง Reducer
+        private createReducer<T>(
+            action$:Observable<T>, // รับ Action เข้ามา
+            accumulator:(
+            state:AppState, // รับ state ก่อนหน้า
+            action:T)  // รับ Action เข้ามา
+            => AppState // และ method นี้จะ return state ใหม่ออกมา
+        ){
+            // รอเกิด Action >> เมื่อเกิด Action ให้ทำงานในส่วนของ subscribe
+            action$.subscribe((action)=>{
+            const state = {...this.state.value} // ดึง state เก่าออกมา (clone เป็น state)
+            const newState = accumulator(state,action) // ส่ง state เก่าเข้าไปทำงานใน accumulator เพื่อให้ได้ state ใหม่ออกมา
+            this.state.next(newState) // ปล่อย state ใหม่
+            })
+        }
+    🟠 สร้าง Reducer ใน constructor
+        constructor() {
+            //เมื่อเกิด Action increaseLimit
+            this.createReducer(this.increaseLimitAction,(state,limit)=>{
+            state.limit += limit //เพิ่มค่า limit เข้าไปที่ state
+            return state;
+            })
+            //เมื่อเกิด Action decreaseLimit
+            this.createReducer(this.decreaseLimitAction,(state,limit)=>{
+            state.limit -= limit //ลดค่า limit เข้าไปที่ state
+            return state
+            })
+            //เมื่อเกิด Action increaseOffset
+            this.createReducer(this.increaseOffsetAction,(state,offset)=>{
+            state.offect -= offset //เพิ่มค่า offset เข้าไปที่ state
+            return state
+            })
+            //เมื่อเกิด Action decraseOffset
+            this.createReducer(this.decreaseOffsetAction,(state,offset)=>{
+            state.offect -= offset //เพิ่มค่า offset เข้าไปที่ state
+            return state
+            })
+        }
